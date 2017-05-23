@@ -22,10 +22,12 @@ OP = {
     'LOAD_CONST': 100,
     'RETURN_VALUE': 83,
     'BINARY_DIVIDE': 21,
-		'STORE_NAME': 90,
+    'STORE_NAME': 90,
     'LOAD_NAME': 101,
-		'BINARY_ADD': 23,
-    'BINARY_MODULO': 22
+    'BINARY_ADD': 23,
+    'BINARY_MODULO': 22,
+    'MAKE_FUNCTION': 132,
+    'CALL_FUNCTION': 131,		
 }
 
 HAVE_ARGUMENT = 90  # opcodes from here on have an argument
@@ -58,21 +60,60 @@ def interpret(code):
         elif opcode == OP['RETURN_VALUE']:
             return values.pop()
         elif opcode == OP['BINARY_DIVIDE']:
-            val1 = values.pop() 
+            val1 = values.pop()
             val2 = values.pop()
             values.append(val2 / val1)
-        elif opcode == OP['STORE_NAME']:						
+        elif opcode == OP['STORE_NAME']:
             myDict[oparg] = values.pop()
         elif opcode == OP['LOAD_NAME']:
             values.append(myDict[oparg])
         elif opcode == OP['BINARY_ADD']:
-            val1 = values.pop()					
+            val1 = values.pop()
             val2 = values.pop()
             values.append(val1 + val2)
         elif opcode == OP['BINARY_MODULO']:
             val1 = values.pop()
             val2 = values.pop()
             values.append(val2 % val1)
+        elif opcode == OP['MAKE_FUNCTION']:
+            v = values.pop()
+            print v.co_lnotab, ' is the value'
+            values.append(v.co_consts)
+            """
+						Very stuck at the moment
+						How to create a function from a code object ?
+            https://github.com/python/cpython/blob/2.7/Python/ceval.c
+            https://github.com/python/cpython/blob/2.7/Include/opcode.h
+						https://late.am/post/2012/03/26/exploring-python-code-objects.html
+       
+						// taken from the cpython library, 
+			  TARGET(MAKE_FUNCTION)
+        {
+            v = POP(); /* code object */
+            x = PyFunction_New(v, f->f_globals);
+            Py_DECREF(v);
+            /* XXX Maybe this should be a separate opcode? */
+            if (x != NULL && oparg > 0) {
+                v = PyTuple_New(oparg);
+                if (v == NULL) {
+                    Py_DECREF(x);
+                    x = NULL;
+                    break;
+                }
+                while (--oparg >= 0) {
+                    w = POP();
+                    PyTuple_SET_ITEM(v, oparg, w);
+                }
+                err = PyFunction_SetDefaults(x, v);
+                Py_DECREF(v);
+            }
+            PUSH(x);
+            break;
+        }
+						
+						"""
+        elif opcode == OP['CALL_FUNCTION']:
+            print values[0].co_lnotab
         else:
             print 'Unknown opcode {}'.format(opcode)
 
